@@ -63,7 +63,12 @@ input[type=range]{padding:0;border:0;background:none;box-shadow:none;accent-colo
 .menu b{display:block}.menu small{display:block;color:var(--mut);margin-bottom:12px;word-break:break-all}.menu .btn{width:100%}
 select{font:500 14px 'DM Sans';color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:99px;padding:9px 14px;cursor:pointer;outline:none}
 select:focus-visible{outline:2px solid var(--a)}option{background:var(--bg);color:var(--ink)}
-.nm{margin-top:4px;font-weight:500}
+.top h3{min-width:0;flex:1}
+.acts{display:flex;gap:6px;align-items:center;flex-shrink:0}
+.pen{width:26px;height:26px;border:0;border-radius:50%;background:var(--line);color:var(--ink);display:grid;place-items:center;cursor:pointer;padding:0;transition:transform .25s cubic-bezier(.3,1.6,.5,1),background .2s,color .2s}
+.pen:hover,.pen:focus-visible{transform:scale(1.15) rotate(-12deg);background:linear-gradient(135deg,var(--a),var(--b));color:#fff;outline:none}
+.pen svg{width:13px;height:13px}
+.ttl{font:600 1.25rem/1.2 Syne,sans-serif;padding:4px 8px;margin:-5px -9px;border-radius:10px}
 </style></head><body>
 <div class="blob b1"></div><div class="blob b2"></div><div id="glow"></div>
 <main>
@@ -106,11 +111,11 @@ function render(animate){
  const list=items.filter(p=>filter==='All'||p.status===filter).sort(S[sortBy]);
  const open=new Set([...grid.querySelectorAll('.open')].map(c=>c.dataset.id));
  grid.innerHTML=list.length?list.map(p=>`<article class="card ${open.has(p.id)?'open':''}" data-id="${p.id}" tabindex="0">
- <div class="top"><h3>${esc(p.name)}</h3><button class="chip s-${p.status}" title="Change status">${p.status}</button></div>
+ <div class="top"><h3>${esc(p.name)}</h3><div class="acts"><button class="chip s-${p.status}" title="Change status">${p.status}</button><button class="pen" title="Rename" aria-label="Rename project"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></button></div></div>
  <p>${p.notes?esc(p.notes.slice(0,90)):'No notes yet'}</p>
  <div class="prog"><i style="width:${p.progress}%"></i></div>
  <div class="foot"><span>${p.progress}% done</span><span>${new Date(p.created).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</span></div>
- <div class="more"><div><input class="nm" value="${esc(p.name)}" aria-label="Project name" maxlength="80" placeholder="Project name">
+ <div class="more"><div>
  <input type="range" min="0" max="100" step="5" value="${p.progress}" aria-label="Progress">
  <textarea placeholder="Notes, links, next steps…" aria-label="Notes">${esc(p.notes||'')}</textarea>
  <button class="del">Delete project</button></div></div></article>`).join(''):`<div class="empty">${filter==='All'?'No projects yet. Add your first one above.':'Nothing marked '+filter+' yet.'}</div>`;
@@ -118,16 +123,22 @@ function render(animate){
   const n=c.getBoundingClientRect(),dx=o.left-n.left,dy=o.top-n.top;
   if(dx||dy)c.animate([{transform:`translate(${dx}px,${dy}px)`},{transform:'none'}],{duration:550,easing:'cubic-bezier(.2,.9,.3,1.1)'})})
 }
+function editName(c,p){const h=c.querySelector('h3');if(h.querySelector('input'))return;
+ const i=document.createElement('input');i.className='ttl';i.value=p.name;i.maxLength=80;i.setAttribute('aria-label','Project name');
+ h.textContent='';h.appendChild(i);i.focus();i.select();
+ let done=false;const fin=ok=>{if(done)return;done=true;const v=i.value.trim();if(ok&&v&&v!==p.name){p.name=v;save(p);render()}else h.textContent=p.name};
+ i.onkeydown=e=>{if(e.key==='Enter')fin(true);if(e.key==='Escape')fin(false)};i.onblur=()=>fin(true)}
 grid.addEventListener('click',e=>{
  const c=e.target.closest('.card');if(!c)return;const p=items.find(x=>x.id===c.dataset.id);
+ if(e.target.closest('.pen')){editName(c,p);return}
+ if(e.target.closest('.ttl'))return;
  if(e.target.closest('.chip')){p.status=STAT[(STAT.indexOf(p.status)+1)%4];if(p.status==='Shipped')p.progress=100;save(p);render();return}
  if(e.target.closest('.del')){c.animate([{opacity:1},{opacity:0,transform:'scale(.8)'}],{duration:250}).onfinish=()=>{items=items.filter(x=>x!==p);col&&deleteDoc(doc(col,p.id)).catch(()=>{});render()};return}
  if(e.target.closest('.more'))return;
  c.classList.toggle('open')});
 grid.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('card')){e.preventDefault();e.target.classList.toggle('open')}});
 grid.addEventListener('input',e=>{const c=e.target.closest('.card'),p=items.find(x=>x.id===c.dataset.id);
- if(e.target.classList.contains('nm')){p.name=e.target.value;c.querySelector('h3').textContent=p.name||'Untitled'}
- else if(e.target.type==='range'){p.progress=+e.target.value;c.querySelector('.prog i').style.width=p.progress+'%';c.querySelector('.foot span').textContent=p.progress+'% done'}
+ if(e.target.type==='range'){p.progress=+e.target.value;c.querySelector('.prog i').style.width=p.progress+'%';c.querySelector('.foot span').textContent=p.progress+'% done'}
  else{p.notes=e.target.value;c.querySelector('p').textContent=p.notes?p.notes.slice(0,90):'No notes yet'}
  clearTimeout(p._t);p._t=setTimeout(()=>save({id:p.id,name:p.name,status:p.status,progress:p.progress,notes:p.notes||'',created:p.created}),500)});
 function add(){const v=$('#t').value.trim();if(!v)return;const p={id:'p'+Date.now().toString(36),name:v,status:'Idea',progress:0,notes:'',created:Date.now()};items.push(p);save(p);$('#t').value='';if(filter!=='All'&&filter!=='Idea')filter='All';render()}
@@ -153,6 +164,6 @@ onAuthStateChanged(auth,u=>{
  const av=$('#av');av.textContent=nm[0].toUpperCase();
  if(u.photoURL){const im=new Image();im.referrerPolicy='no-referrer';im.alt='';im.onload=()=>{av.textContent='';av.appendChild(im)};im.src=u.photoURL}
  col=collection(db,'users',u.uid,'projects');
- unsub=onSnapshot(col,sn=>{if(document.activeElement&&document.activeElement.closest('.more'))return;items=sn.docs.map(d=>d.data());render(false)},e=>{$('#note').hidden=false;$('#note').textContent='Could not load projects: '+e.code})
+ unsub=onSnapshot(col,sn=>{if(document.activeElement&&document.activeElement.closest('.more,.ttl'))return;items=sn.docs.map(d=>d.data());render(false)},e=>{$('#note').hidden=false;$('#note').textContent='Could not load projects: '+e.code})
 });
 </script></body></html>
