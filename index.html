@@ -16,7 +16,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 'DM Sans',syst
 @keyframes d1{to{transform:translate(40vw,30vh) scale(1.2)}}
 @keyframes d2{to{transform:translate(-35vw,-25vh) scale(.9)}}
 #glow{position:fixed;width:360px;height:360px;margin:-180px 0 0 -180px;border-radius:50%;background:radial-gradient(circle,rgba(255,95,162,.25),transparent 65%);pointer-events:none;z-index:1;transition:transform .25s cubic-bezier(.2,.8,.2,1)}
-main{position:relative;z-index:2;max-width:1000px;margin:0 auto;padding:48px 20px 80px}
+main{position:relative;z-index:2;max-width:1000px;margin:0 auto;padding:76px 20px 80px}
 h1{font:800 clamp(2.4rem,7vw,4.4rem)/1 Syne,sans-serif;margin:0 0 8px;letter-spacing:-.03em}
 h1 span{display:inline-block;animation:rise .9s cubic-bezier(.2,.8,.2,1) both}
 h1 span:nth-child(2){animation-delay:.12s;background:linear-gradient(90deg,var(--a),var(--b));-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -33,7 +33,7 @@ input:focus,textarea:focus{border-color:var(--a);box-shadow:0 0 0 3px rgba(91,91
 .btn{border:0;border-radius:12px;padding:10px 18px;font:600 14px 'DM Sans';color:#fff;background:linear-gradient(90deg,var(--a),var(--b));cursor:pointer;white-space:nowrap;transition:transform .2s cubic-bezier(.3,1.6,.5,1)}
 .btn:hover{transform:scale(1.06)}.btn:active{transform:scale(.95)}
 .btn:focus-visible,.tabs button:focus-visible,.chip:focus-visible,.card:focus-visible{outline:2px solid var(--a);outline-offset:2px}
-#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+#grid{align-items:start;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px;backdrop-filter:blur(14px);transform-style:preserve-3d;will-change:transform;transition:box-shadow .3s}
 .card:hover{box-shadow:0 20px 50px -20px rgba(91,91,255,.5)}
 .card h3{font:600 1.25rem/1.2 Syne,sans-serif;margin:0 0 6px}
@@ -55,15 +55,25 @@ input[type=range]{padding:0;border:0;background:none;box-shadow:none;accent-colo
 .empty{grid-column:1/-1;text-align:center;color:var(--mut);padding:60px 0}
 #note{font-size:13px;color:var(--mut);margin-top:24px}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-.gate{display:none;padding-top:12vh}body:not(.authed) .gate{display:block}body:not(.authed) .app{display:none}</style></head><body>
+.gate{display:none;padding-top:12vh}body:not(.authed) .gate{display:block}body:not(.authed) .app{display:none}.topbar{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));right:18px;z-index:5}
+.av{width:44px;height:44px;border-radius:50%;border:2px solid var(--line);background:linear-gradient(135deg,var(--a),var(--b));color:#fff;font:700 18px Syne,sans-serif;display:grid;place-items:center;cursor:pointer;overflow:hidden;padding:0;transition:transform .3s cubic-bezier(.3,1.6,.5,1)}
+.av:hover{transform:scale(1.1)}.av img{width:100%;height:100%;object-fit:cover}
+.menu{position:absolute;right:0;top:54px;min-width:230px;background:var(--bg);border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:0 20px 40px -15px rgba(0,0,0,.5);opacity:0;transform:translateY(-8px) scale(.94);transform-origin:top right;pointer-events:none;transition:opacity .25s,transform .35s cubic-bezier(.2,.9,.3,1.2)}
+.topbar.open .menu{opacity:1;transform:none;pointer-events:auto}
+.menu b{display:block}.menu small{display:block;color:var(--mut);margin-bottom:12px;word-break:break-all}.menu .btn{width:100%}
+select{font:500 14px 'DM Sans';color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:99px;padding:9px 14px;cursor:pointer;outline:none}
+select:focus-visible{outline:2px solid var(--a)}option{background:var(--bg);color:var(--ink)}
+.nm{margin-top:4px;font-weight:500}
+</style></head><body>
 <div class="blob b1"></div><div class="blob b2"></div><div id="glow"></div>
 <main>
 <div class="gate"><h1><span>My</span> <span>projects</span></h1><p class="sub">Sign in to see your projects.</p><button class="btn" id="in">Sign in with Google</button><p id="err" class="sub"></p></div>
 <div class="app">
+<div class="topbar" id="tb"><button class="av" id="av" aria-label="Account menu"></button><div class="menu"><b id="who"></b><small id="em"></small><button class="btn" id="out">Sign out</button></div></div>
 <h1><span>My</span> <span>projects</span></h1>
-<p class="sub">Everything you're building, in one place. Click a card to add notes. <span id="who"></span> · <button id="out" class="del" style="margin:0">Sign out</button></p>
 <div class="bar">
 <div class="tabs" id="tabs"><span id="pill"></span></div>
+<select id="sort" aria-label="Sort projects"><option value="new">Newest first</option><option value="old">Oldest first</option><option value="az">Name A–Z</option><option value="prog">Most progress</option></select>
 <form class="add" id="f" onsubmit="return false"><input id="t" placeholder="New project name" aria-label="New project name" maxlength="80"><button class="btn" id="addb" type="button">Add project</button></form>
 </div>
 <div id="grid"></div>
@@ -83,7 +93,7 @@ const firebaseConfig={
  appId:"1:372344472864:web:09d3c17737f2cb17270345"
 };
 const STAT=['Idea','Building','Paused','Shipped'],TABS=['All',...STAT];
-let items=[],filter='All',col=null,mem=false;
+let items=[],filter='All',sortBy='new',col=null,mem=false;
 const $=s=>document.querySelector(s),grid=$('#grid'),tabs=$('#tabs'),pill=$('#pill');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 TABS.forEach(n=>{const b=document.createElement('button');b.textContent=n;b.onclick=()=>{filter=n;render(true)};tabs.appendChild(b)});
@@ -92,14 +102,15 @@ function save(p){if(col)setDoc(doc(col,p.id),{id:p.id,name:p.name,status:p.statu
 function render(animate){
  movePill();
  const first=new Map([...grid.children].map(c=>[c.dataset.id,c.getBoundingClientRect()]));
- const list=items.filter(p=>filter==='All'||p.status===filter).sort((a,b)=>b.created-a.created);
+ const S={new:(a,b)=>b.created-a.created,old:(a,b)=>a.created-b.created,az:(a,b)=>a.name.localeCompare(b.name),prog:(a,b)=>b.progress-a.progress||b.created-a.created};
+ const list=items.filter(p=>filter==='All'||p.status===filter).sort(S[sortBy]);
  const open=new Set([...grid.querySelectorAll('.open')].map(c=>c.dataset.id));
  grid.innerHTML=list.length?list.map(p=>`<article class="card ${open.has(p.id)?'open':''}" data-id="${p.id}" tabindex="0">
  <div class="top"><h3>${esc(p.name)}</h3><button class="chip s-${p.status}" title="Change status">${p.status}</button></div>
  <p>${p.notes?esc(p.notes.slice(0,90)):'No notes yet'}</p>
  <div class="prog"><i style="width:${p.progress}%"></i></div>
- <div class="foot"><span>${p.progress}% done</span><span>${new Date(p.created).toLocaleDateString(undefined,{month:'short',day:'numeric'})}</span></div>
- <div class="more"><div>
+ <div class="foot"><span>${p.progress}% done</span><span>${new Date(p.created).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</span></div>
+ <div class="more"><div><input class="nm" value="${esc(p.name)}" aria-label="Project name" maxlength="80" placeholder="Project name">
  <input type="range" min="0" max="100" step="5" value="${p.progress}" aria-label="Progress">
  <textarea placeholder="Notes, links, next steps…" aria-label="Notes">${esc(p.notes||'')}</textarea>
  <button class="del">Delete project</button></div></div></article>`).join(''):`<div class="empty">${filter==='All'?'No projects yet. Add your first one above.':'Nothing marked '+filter+' yet.'}</div>`;
@@ -115,10 +126,15 @@ grid.addEventListener('click',e=>{
  c.classList.toggle('open')});
 grid.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('card')){e.preventDefault();e.target.classList.toggle('open')}});
 grid.addEventListener('input',e=>{const c=e.target.closest('.card'),p=items.find(x=>x.id===c.dataset.id);
- if(e.target.type==='range'){p.progress=+e.target.value;c.querySelector('.prog i').style.width=p.progress+'%';c.querySelector('.foot span').textContent=p.progress+'% done'}
+ if(e.target.classList.contains('nm')){p.name=e.target.value;c.querySelector('h3').textContent=p.name||'Untitled'}
+ else if(e.target.type==='range'){p.progress=+e.target.value;c.querySelector('.prog i').style.width=p.progress+'%';c.querySelector('.foot span').textContent=p.progress+'% done'}
  else{p.notes=e.target.value;c.querySelector('p').textContent=p.notes?p.notes.slice(0,90):'No notes yet'}
  clearTimeout(p._t);p._t=setTimeout(()=>save({id:p.id,name:p.name,status:p.status,progress:p.progress,notes:p.notes||'',created:p.created}),500)});
 function add(){const v=$('#t').value.trim();if(!v)return;const p={id:'p'+Date.now().toString(36),name:v,status:'Idea',progress:0,notes:'',created:Date.now()};items.push(p);save(p);$('#t').value='';if(filter!=='All'&&filter!=='Idea')filter='All';render()}
+$('#sort').onchange=e=>{sortBy=e.target.value;render()};
+$('#av').onclick=e=>{e.stopPropagation();$('#tb').classList.toggle('open')};
+document.addEventListener('click',e=>{if(!e.target.closest('.menu'))$('#tb').classList.remove('open')});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')$('#tb').classList.remove('open')});
 $('#addb').onclick=add;$('#t').addEventListener('keydown',e=>{if(e.key==='Enter')add()});
 // cursor glow + gentle card tilt
 const glow=$('#glow');addEventListener('pointermove',e=>{glow.style.transform=`translate(${e.clientX}px,${e.clientY}px)`;
@@ -133,7 +149,9 @@ onAuthStateChanged(auth,u=>{
  document.body.classList.toggle('authed',!!u);
  if(unsub){unsub();unsub=null}
  if(!u){items=[];col=null;render(false);return}
- $('#who').textContent=u.displayName||u.email;
+ const nm=u.displayName||u.email||'?';$('#who').textContent=nm;$('#em').textContent=u.email||'';
+ const av=$('#av');av.textContent=nm[0].toUpperCase();
+ if(u.photoURL){const im=new Image();im.referrerPolicy='no-referrer';im.alt='';im.onload=()=>{av.textContent='';av.appendChild(im)};im.src=u.photoURL}
  col=collection(db,'users',u.uid,'projects');
  unsub=onSnapshot(col,sn=>{if(document.activeElement&&document.activeElement.closest('.more'))return;items=sn.docs.map(d=>d.data());render(false)},e=>{$('#note').hidden=false;$('#note').textContent='Could not load projects: '+e.code})
 });
