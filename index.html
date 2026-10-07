@@ -112,7 +112,6 @@ function render(animate){
  const open=new Set([...grid.querySelectorAll('.open')].map(c=>c.dataset.id));
  grid.innerHTML=list.length?list.map(p=>`<article class="card ${open.has(p.id)?'open':''}" data-id="${p.id}" tabindex="0">
  <div class="top"><h3>${esc(p.name)}</h3><div class="acts"><button class="chip s-${p.status}" title="Change status">${p.status}</button><button class="pen" title="Rename" aria-label="Rename project"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></button></div></div>
- <p>${p.notes?esc(p.notes.slice(0,90)):'No notes yet'}</p>
  <div class="prog"><i style="width:${p.progress}%"></i></div>
  <div class="foot"><span>${p.progress}% done</span><span>${new Date(p.created).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</span></div>
  <div class="more"><div>
@@ -139,7 +138,7 @@ grid.addEventListener('click',e=>{
 grid.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('card')){e.preventDefault();e.target.classList.toggle('open')}});
 grid.addEventListener('input',e=>{const c=e.target.closest('.card'),p=items.find(x=>x.id===c.dataset.id);
  if(e.target.type==='range'){p.progress=+e.target.value;c.querySelector('.prog i').style.width=p.progress+'%';c.querySelector('.foot span').textContent=p.progress+'% done'}
- else{p.notes=e.target.value;c.querySelector('p').textContent=p.notes?p.notes.slice(0,90):'No notes yet'}
+ else{p.notes=e.target.value}
  clearTimeout(p._t);p._t=setTimeout(()=>save({id:p.id,name:p.name,status:p.status,progress:p.progress,notes:p.notes||'',created:p.created}),500)});
 function add(){const v=$('#t').value.trim();if(!v)return;const p={id:'p'+Date.now().toString(36),name:v,status:'Idea',progress:0,notes:'',created:Date.now()};items.push(p);save(p);$('#t').value='';if(filter!=='All'&&filter!=='Idea')filter='All';render()}
 $('#sort').onchange=e=>{sortBy=e.target.value;render()};
